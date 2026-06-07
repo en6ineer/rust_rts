@@ -1,12 +1,23 @@
-use bevy::prelude::*;
+﻿use bevy::prelude::*;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+	  .init_state::<GameState>()
         .add_systems(Startup, setup)
-        .add_systems(Update, (player_input, move_units))
+        .add_systems(Update, player_input.run_if(in_state(GameState::Playing)))
+        .add_systems(Update, move_units.run_if(in_state(GameState::Playing)))
+        .add_systems(Update, toggle_pause)
         .run();
 }
+
+#[derive(States, Debug, Clone, Eq, PartialEq, Hash, Default)]
+enum GameState {
+    #[default]
+    Playing,
+    Paused,
+}
+
 
 #[derive(Component)]
 struct Velocity {
@@ -68,3 +79,11 @@ fn player_input(
     }
 }
 
+fn toggle_pause (
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    if keyboard.just_pressed(KeyCode::Space) {
+        next_state.set(GameState::Paused);
+    }
+}
